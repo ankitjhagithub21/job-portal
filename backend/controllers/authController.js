@@ -1,132 +1,137 @@
 import { User } from "../models/userModel.js";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
-export const register  = async(req,res) =>{
-    try{
-        const {fullName,email,phone,password,role} = req.body;
+export const register = async (req, res) => {
+    try {
+        const { fullName, email, phone, password, role } = req.body;
 
-        if(!fullName || !email || !phone || password || !role){
+        if (!fullName || !email || !phone || password || !role) {
             return res.json({
-                success:false,
-                message:"All fields are required."
+                success: false,
+                message: "All fields are required."
             })
         }
-        const user = await User.findOne({email})
+        const user = await User.findOne({ email })
 
-        if(user){
+        if (user) {
             return res.json({
-                success:false,
-                message:"User already exist."
+                success: false,
+                message: "User already exist."
             })
         }
-        const hashedPassword = await bcrypt.hash(password,10)
+        const hashedPassword = await bcrypt.hash(password, 10)
 
         await User.create({
             fullName,
             email,
             phone,
-            password:hashedPassword,
+            password: hashedPassword,
             role
         })
         res.status(201).json({
-            success:true,
-            message:"Account created."
+            success: true,
+            message: "Account created."
         })
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
-            success:false,
-            message:error.message
+            success: false,
+            message: error.message
         })
     }
 }
 
 
-export const login  = async(req,res) =>{
-    try{
-        const {email,password,role} = req.body;
+export const login = async (req, res) => {
+    try {
+        const { email, password, role } = req.body;
 
-        if(!email || !password || !role){
+        if (!email || !password || !role) {
             return res.json({
-                success:false,
-                message:"All fields are required."
+                success: false,
+                message: "All fields are required."
             })
         }
-        let user = await User.findOne({email})
+        let user = await User.findOne({ email })
 
-        if(!user){
+        if (!user) {
             return res.json({
-                success:false,
-                message:"Wrong email or password."
+                success: false,
+                message: "Wrong email or password."
             })
         }
 
-        const comparePassword = await bcrypt.compare(password,user.password)
+        const comparePassword = await bcrypt.compare(password, user.password)
 
 
-        
-        if(!comparePassword){
+
+        if (!comparePassword) {
             return res.json({
-                success:false,
-                message:"Wrong email or password."
+                success: false,
+                message: "Wrong email or password."
             })
         }
 
         //check role is correct or not
-        if(role!==user.role){
+        if (role !== user.role) {
             return res.json({
-                success:false,
-                message:"Account not exist with current role."
+                success: false,
+                message: "Account not exist with current role."
             })
         }
 
-        const token = jwt.sign({userId:user._id},process.env.SECRET_KEY,{expiresIn:"1d"})
+        const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, { expiresIn: "1d" })
         user = {
-            _id:user._id,
-            fullName:user.fullName,
-            email:user.email,
-            phone:user.phone,
-            role:user.role,
-            profile:user.profile
+            _id: user._id,
+            fullName: user.fullName,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            profile: user.profile
         }
 
-        res.status(200).cookie('token',token,{
-            httpOnly:true,
-            secure:true,
-            sameSite:"none",
-            maxAge:1*24*60*60*1000
+        res.status(200).cookie('token', token, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 1 * 24 * 60 * 60 * 1000
         }).json({
-            success:true,
-            message:`Welcome back ${user.fullName}`,
+            success: true,
+            message: `Welcome back ${user.fullName}`,
             user
         })
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
-            success:false,
-            message:error.message
+            success: false,
+            message: error.message
         })
     }
 }
 
 
-export const logout  = async(req,res) =>{
-    try{
-      
+export const logout = async (req, res) => {
+    try {
 
-        res.status(200).cookie('token','',{
-            httpOnly:true,
-            secure:true,
-            sameSite:"none",
-            maxAge:0
+
+        res.status(200).cookie('token', '', {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            maxAge: 0
         }).json({
-            success:true,
-            message:"Logout Successfull.",
-            
+            success: true,
+            message: "Logout Successfull.",
+
         })
-    }catch(error){
+    } catch (error) {
         res.status(500).json({
-            success:false,
-            message:error.message
+            success: false,
+            message: error.message
         })
     }
 }
+
+
+
+
+
 
